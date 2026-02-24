@@ -81,51 +81,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint with API documentation
+// Root endpoint - redirect to Swagger UI
 app.get('/', (req, res) => {
-  res.status(200).json({
-    name: 'Global Gaming Leaderboard API',
-    version: '1.0.0',
-    description: 'Scalable REST API for managing global gaming leaderboards with real-time rankings',
-    documentation: '/api-docs',
-    endpoints: {
-      'POST /scores': {
-        description: 'Submit or update a score for a user in a specific game',
-        body: {
-          userId: 'string (required)',
-          gameName: 'string (required)',
-          score: 'number (required, >= 0)'
-        }
-      },
-      'GET /leaderboard/top/:count': {
-        description: 'Get top X users sorted by total score',
-        params: {
-          count: 'number (required, 1-1000)'
-        }
-      },
-      'GET /leaderboard/user/:userId': {
-        description: 'Get user\'s rank and surrounding users (above and below)',
-        params: {
-          userId: 'string (required)'
-        }
-      },
-      'GET /stats': {
-        description: 'Get leaderboard statistics'
-      },
-      'GET /health': {
-        description: 'Health check endpoint'
-      }
-    },
-    features: [
-      'Real-time score updates',
-      'Efficient leaderboard queries with database indexing',
-      'File-based SQLite database (zero configuration)',
-      'Rate limiting for API protection',
-      'Input validation with Joi',
-      'Scalable architecture',
-      'Persistent data storage'
-    ]
-  });
+  res.redirect('/api-docs');
 });
 
 // API routes
