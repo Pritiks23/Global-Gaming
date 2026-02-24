@@ -4,6 +4,26 @@
 
 You made Swagger UI changes in a previous PR (#3), the changes were merged to your repository, but **the live DigitalOcean app hasn't been updated** to include those changes.
 
+## Current vs. Desired State
+
+**Current State (Problem):**
+```
+GitHub Repository (has Swagger UI) ✓
+         ↓
+         ✗  [No automatic deployment]
+         ↓
+DigitalOcean Server (missing Swagger UI) ✗
+```
+
+**Desired State (Solution):**
+```
+GitHub Repository (has Swagger UI) ✓
+         ↓
+         ✓  [Automatic deployment OR manual trigger]
+         ↓
+DigitalOcean Server (has Swagger UI) ✓
+```
+
 ## Why This Happened
 
 When you commit code to GitHub:
