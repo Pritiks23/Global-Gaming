@@ -1,15 +1,15 @@
 # Global Gaming Leaderboard API
 
-A scalable, production-ready REST API for managing global gaming leaderboards with real-time rankings, built with Node.js, Express, MongoDB, and Redis.
+A simple, production-ready REST API for managing global gaming leaderboards with real-time score updates, built with Node.js, Express, and SQLite.
 
 ## Features
 
 - **Real-time Score Updates**: Submit and update scores for users across multiple games
 - **Efficient Leaderboard Queries**: Get top rankings with optimized database indexing
 - **User Context**: View user rank with surrounding players
-- **High Performance**: Redis caching for improved response times
-- **Scalable Architecture**: Designed for horizontal scaling
-- **Persistent Storage**: MongoDB for reliable data persistence
+- **Zero-Configuration Database**: SQLite file-based database (no separate database server needed)
+- **Scalable Architecture**: Designed for easy deployment and horizontal scaling
+- **Persistent Storage**: SQLite for reliable data persistence
 - **Security**: Rate limiting, helmet.js, input validation
 - **Production Ready**: Docker containerization, health checks, graceful shutdown
 
@@ -102,23 +102,22 @@ GET /stats
 
 ### Prerequisites
 - Node.js 18+ or Docker
-- MongoDB 6+ (or use Docker Compose)
-- Redis 7+ (or use Docker Compose)
+- That's it! No external database required!
 
-### Option 1: Docker Compose (Recommended)
+### Option 1: Docker (Recommended for Production)
 
 ```bash
 # Clone the repository
 git clone https://github.com/Pritiks23/Global-Gaming.git
 cd Global-Gaming
 
-# Start all services
+# Start the service
 docker-compose up -d
 
 # View logs
 docker-compose logs -f app
 
-# Stop services
+# Stop service
 docker-compose down
 ```
 
@@ -130,33 +129,29 @@ The API will be available at `http://localhost:3000`
 # Install dependencies
 npm install
 
-# Copy environment file
+# Copy environment file (optional - uses sensible defaults)
 cp .env.example .env
 
-# Edit .env with your MongoDB and Redis connection strings
-
-# Start MongoDB and Redis (if not using Docker)
-# Then start the application
+# Start the application
 npm start
 ```
 
+The database file will be automatically created at `./data/leaderboard.sqlite`
+
 ## Environment Variables
 
-Create a `.env` file based on `.env.example`:
+The application works with sensible defaults. You can optionally create a `.env` file to customize:
 
 ```env
 NODE_ENV=production
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/gaming-leaderboard
-REDIS_HOST=localhost
-REDIS_PORT=6379
-CACHE_TTL=300
+DB_STORAGE=./data/leaderboard.sqlite
 MAX_LEADERBOARD_SIZE=10000
 ```
 
 ## Deployment to DigitalOcean
 
-### Using DigitalOcean App Platform
+### Using DigitalOcean App Platform (Easiest - Deploy in 5 minutes!)
 
 1. **Create a new App** in DigitalOcean App Platform
 2. **Connect your GitHub repository**
@@ -164,45 +159,35 @@ MAX_LEADERBOARD_SIZE=10000
    - Build Command: `npm install`
    - Run Command: `npm start`
    - HTTP Port: 3000
-4. **Add MongoDB and Redis** as managed databases or components
-5. **Set environment variables** in the App Platform dashboard
-6. **Deploy**
+4. **Deploy** - That's it! No database setup needed!
 
-### Using DigitalOcean Droplet with Docker
+The SQLite database file will be created automatically inside the container.
+
+**Note**: For persistent data across deployments, consider mounting a volume for the `/app/data` directory.
+
+### Using DigitalOcean Droplet with Docker (5-10 minutes)
 
 ```bash
 # SSH into your droplet
 ssh root@your-droplet-ip
 
-# Install Docker and Docker Compose
+# Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
-apt-get install docker-compose-plugin
+apt-get install docker-compose-plugin -y
 
 # Clone your repository
 git clone https://github.com/Pritiks23/Global-Gaming.git
 cd Global-Gaming
 
-# Create .env file with production settings
-nano .env
-
-# Start services
+# Start the service
 docker compose up -d
 
 # Check logs
 docker compose logs -f
 ```
 
-### Using DigitalOcean Kubernetes
-
-```bash
-# Build and push Docker image
-docker build -t your-registry/gaming-leaderboard:latest .
-docker push your-registry/gaming-leaderboard:latest
-
-# Apply Kubernetes manifests
-kubectl apply -f k8s/
-```
+Your API is now live at `http://your-droplet-ip:3000`!
 
 ## Architecture
 
@@ -217,35 +202,37 @@ kubectl apply -f k8s/
 └──────┬──────────────┘
        │
        ▼
-┌─────────────────────┐      ┌──────────────┐
-│   Express API       │◄────►│    Redis     │
-│   (Node.js)         │      │   (Cache)    │
-└──────┬──────────────┘      └──────────────┘
+┌─────────────────────┐      
+│   Express API       │      
+│   (Node.js)         │      
+└──────┬──────────────┘      
        │
        ▼
 ┌─────────────────────┐
-│     MongoDB         │
-│  (Persistence)      │
+│     SQLite          │
+│  (File-based DB)    │
 └─────────────────────┘
 ```
 
 ## Performance Considerations
 
-- **Database Indexing**: Compound indexes on userId + gameName, descending index on totalScore
-- **Caching Strategy**: Redis caching for top leaderboard queries (1-minute TTL)
-- **Query Optimization**: Lean queries, field projection, limit results
+- **Database Indexing**: Indexes on userId and totalScore for efficient queries
+- **Query Optimization**: Efficient SQL queries with proper indexing
 - **Rate Limiting**: 100 requests per minute per IP
-- **Connection Pooling**: MongoDB connection pooling enabled
+- **File-Based Storage**: SQLite for zero-configuration database
+- **Lightweight**: No external database dependencies
 
 ## Scalability
 
-The API is designed to scale horizontally:
+The API is designed for easy deployment and scalability:
 
-1. **Stateless Design**: All application state stored in MongoDB/Redis
-2. **Horizontal Scaling**: Run multiple API instances behind a load balancer
-3. **Caching**: Redis for distributed caching across instances
-4. **Database Sharding**: MongoDB can be sharded by userId for larger datasets
-5. **Read Replicas**: Use MongoDB read replicas for read-heavy workloads
+1. **Stateless Design**: All application state stored in SQLite database
+2. **Horizontal Scaling**: Run multiple API instances behind a load balancer with a shared database volume
+3. **File-Based Database**: Easy to backup and migrate
+4. **Zero External Dependencies**: No need for separate database servers
+5. **Docker Ready**: Simple containerization for cloud deployment
+
+**Note**: For very high-scale production workloads (100K+ users), consider migrating to PostgreSQL or MySQL with read replicas.
 
 ## Security Features
 
@@ -307,12 +294,13 @@ npm run dev
 Global-Gaming/
 ├── src/
 │   ├── config/          # Configuration files
-│   ├── models/          # MongoDB models
+│   ├── models/          # Database models (Sequelize)
 │   ├── services/        # Business logic
 │   ├── controllers/     # Request handlers
 │   ├── routes/          # API routes
 │   ├── middleware/      # Custom middleware
 │   └── server.js        # Application entry point
+├── data/                # SQLite database files (auto-created)
 ├── docker-compose.yml   # Docker Compose configuration
 ├── Dockerfile           # Docker image definition
 ├── package.json         # Dependencies
@@ -322,6 +310,7 @@ Global-Gaming/
 ## Future Enhancements
 
 - Automated testing (Jest/Mocha for unit tests, Supertest for API tests)
+- Migrate to PostgreSQL/MySQL for very high-scale deployments
 - WebSocket support for real-time updates
 - Multi-region deployment
 - Advanced analytics and insights
@@ -330,6 +319,18 @@ Global-Gaming/
 - Time-based leaderboards (daily, weekly, monthly)
 - GraphQL API
 - Admin dashboard
+
+## Why SQLite?
+
+SQLite is perfect for this use case because:
+- **Zero Configuration**: No separate database server to manage
+- **Fast**: Excellent performance for moderate traffic (thousands of requests per hour)
+- **Reliable**: ACID-compliant, battle-tested database
+- **Portable**: Single file that's easy to backup and migrate
+- **Cost-Effective**: No database hosting costs
+- **Easy to Scale Up**: Can migrate to PostgreSQL/MySQL later if needed
+
+**Performance Guidance**: SQLite works great for most gaming leaderboards with moderate write frequency (under 1000 writes/second). For very high-traffic applications or multi-region deployments, consider PostgreSQL or MySQL with read replicas.
 
 ## License
 

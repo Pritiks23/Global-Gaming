@@ -1,23 +1,24 @@
 # Quick Start Guide
 
-Get the Global Gaming Leaderboard API up and running in under 5 minutes!
+Get the Global Gaming Leaderboard API up and running in under 2 minutes!
 
 ## Prerequisites
 
 - Docker and Docker Compose installed
-- OR Node.js 18+ with MongoDB and Redis
+- OR Node.js 18+
+- **That's it! No external databases needed!**
 
-## Option 1: Docker Compose (Recommended - Easiest)
+## Option 1: Docker (Recommended - 1 minute setup)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Pritiks23/Global-Gaming.git
 cd Global-Gaming
 
-# 2. Start all services
+# 2. Start the service
 docker compose up -d
 
-# 3. Wait a few seconds for services to start, then test
+# 3. Test immediately
 curl http://localhost:3000/health
 
 # 4. Submit your first score
@@ -31,7 +32,7 @@ curl http://localhost:3000/leaderboard/top/10
 
 That's it! Your API is running at `http://localhost:3000`
 
-## Option 2: Local Development
+## Option 2: Local Development (Even Faster!)
 
 ```bash
 # 1. Clone and install
@@ -39,20 +40,14 @@ git clone https://github.com/Pritiks23/Global-Gaming.git
 cd Global-Gaming
 npm install
 
-# 2. Copy environment file
-cp .env.example .env
-
-# 3. Start MongoDB and Redis (if not already running)
-# Using Docker:
-docker run -d -p 27017:27017 mongo:6
-docker run -d -p 6379:6379 redis:7-alpine
-
-# 4. Start the application
+# 2. Start the application (no setup needed!)
 npm start
 
-# 5. Test
+# 3. Test
 curl http://localhost:3000/health
 ```
+
+The SQLite database is created automatically at `./data/leaderboard.sqlite`
 
 ## Quick API Test
 

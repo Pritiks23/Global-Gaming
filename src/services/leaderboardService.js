@@ -1,42 +1,37 @@
 const { UserScore } = require('../models/Score');
-const RedisService = require('./redisService');
+const { Op } = require('sequelize');
 
 class LeaderboardService {
-  constructor() {
-    this.redisService = new RedisService();
-  }
-
   /**
    * Submit or update a score for a user in a specific game
    */
   async submitScore(userId, gameName, score) {
     try {
       // Find or create user score document
-      let userScore = await UserScore.findOne({ userId });
+      let userScore = await UserScore.findByPk(userId);
       
       if (!userScore) {
-        userScore = new UserScore({
+        userScore = await UserScore.create({
           userId,
-          games: new Map([[gameName, score]]),
+          games: { [gameName]: score },
           totalScore: score
         });
       } else {
-        // Update the game score
-        userScore.games.set(gameName, score);
+        // Update the game score - create a new object for Sequelize change tracking
+        const games = { ...(userScore.games || {}) };
+        games[gameName] = score;
         
         // Recalculate total score
         let total = 0;
-        for (const [, gameScore] of userScore.games) {
+        for (const gameScore of Object.values(games)) {
           total += gameScore;
         }
+        
+        userScore.games = games;
         userScore.totalScore = total;
         userScore.lastUpdated = new Date();
+        await userScore.save();
       }
-      
-      await userScore.save();
-      
-      // Invalidate cache after score update
-      await this.redisService.invalidateLeaderboardCache();
       
       // Get updated rank
       const rank = await this.getUserRank(userId);
@@ -58,20 +53,10 @@ class LeaderboardService {
    */
   async getTopUsers(count) {
     try {
-      // Try to get from cache first
-      const cacheKey = `leaderboard:top:${count}`;
-      const cached = await this.redisService.get(cacheKey);
-      
-      if (cached) {
-        return JSON.parse(cached);
-      }
-      
-      // Query database
-      const topUsers = await UserScore
-        .find()
-        .sort({ totalScore: -1 })
-        .limit(count)
-        .lean();
+      const topUsers = await UserScore.findAll({
+        order: [['totalScore', 'DESC']],
+        limit: count
+      });
       
       // Transform to include rank
       const rankedUsers = topUsers.map((user, index) => ({
@@ -80,9 +65,6 @@ class LeaderboardService {
         totalScore: user.totalScore,
         games: user.games || {}
       }));
-      
-      // Cache the result
-      await this.redisService.set(cacheKey, JSON.stringify(rankedUsers), 60); // Cache for 1 minute
       
       return rankedUsers;
     } catch (error) {
@@ -95,12 +77,14 @@ class LeaderboardService {
    */
   async getUserRank(userId) {
     try {
-      const userScore = await UserScore.findOne({ userId });
+      const userScore = await UserScore.findByPk(userId);
       if (!userScore) return null;
       
       // Count users with higher scores
-      const rank = await UserScore.countDocuments({
-        totalScore: { $gt: userScore.totalScore }
+      const rank = await UserScore.count({
+        where: {
+          totalScore: { [Op.gt]: userScore.totalScore }
+        }
       });
       
       return rank + 1; // 1-indexed
@@ -114,7 +98,7 @@ class LeaderboardService {
    */
   async getUserContext(userId) {
     try {
-      const userScore = await UserScore.findOne({ userId });
+      const userScore = await UserScore.findByPk(userId);
       if (!userScore) {
         return null;
       }
@@ -122,16 +106,20 @@ class LeaderboardService {
       const rank = await this.getUserRank(userId);
       
       // Get user above (higher score)
-      const userAbove = await UserScore
-        .findOne({ totalScore: { $gt: userScore.totalScore } })
-        .sort({ totalScore: 1 })
-        .lean();
+      const userAbove = await UserScore.findOne({
+        where: {
+          totalScore: { [Op.gt]: userScore.totalScore }
+        },
+        order: [['totalScore', 'ASC']]
+      });
       
       // Get user below (lower score)
-      const userBelow = await UserScore
-        .findOne({ totalScore: { $lt: userScore.totalScore } })
-        .sort({ totalScore: -1 })
-        .lean();
+      const userBelow = await UserScore.findOne({
+        where: {
+          totalScore: { [Op.lt]: userScore.totalScore }
+        },
+        order: [['totalScore', 'DESC']]
+      });
       
       const formatUser = (user, userRank) => user ? {
         rank: userRank,
@@ -160,8 +148,10 @@ class LeaderboardService {
    */
   async getStats() {
     try {
-      const totalUsers = await UserScore.countDocuments();
-      const topUser = await UserScore.findOne().sort({ totalScore: -1 }).lean();
+      const totalUsers = await UserScore.count();
+      const topUser = await UserScore.findOne({
+        order: [['totalScore', 'DESC']]
+      });
       
       return {
         totalUsers,
