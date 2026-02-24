@@ -6,6 +6,12 @@ package-lock.json
 .env
 .env.local
 
+# Database
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
 # Logs
 logs/
 *.log

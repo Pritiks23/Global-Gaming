@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const sequelize = require('./config/database');
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -8,7 +8,6 @@ const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const routes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
-const RedisService = require('./services/redisService');
 
 const app = express();
 
@@ -77,8 +76,8 @@ app.get('/', (req, res) => {
     },
     features: [
       'Real-time score updates',
-      'Efficient leaderboard queries with MongoDB indexing',
-      'Redis caching for improved performance',
+      'Efficient leaderboard queries with database indexing',
+      'File-based SQLite database (zero configuration)',
       'Rate limiting for API protection',
       'Input validation with Joi',
       'Scalable architecture',
@@ -96,28 +95,26 @@ app.use(notFound);
 // Error handler
 app.use(errorHandler);
 
-// Database connection
-const connectDB = async () => {
+// Database connection and initialization
+const initDatabase = async () => {
   try {
-    await mongoose.connect(config.mongodb.uri, config.mongodb.options);
-    console.log('MongoDB connected successfully');
+    await sequelize.authenticate();
+    console.log('SQLite database connected successfully');
+    
+    // Sync models with database
+    await sequelize.sync();
+    console.log('Database models synchronized');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('Database initialization error:', error);
     process.exit(1);
   }
 };
 
-// Redis connection
-const redisService = new RedisService();
-
 // Initialize and start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    await connectDB();
-    
-    // Connect to Redis (non-blocking)
-    await redisService.connect();
+    // Initialize database
+    await initDatabase();
     
     // Start Express server
     const server = app.listen(config.port, () => {
@@ -125,8 +122,7 @@ const startServer = async () => {
       console.log(`Global Gaming Leaderboard API`);
       console.log(`Environment: ${config.env}`);
       console.log(`Server running on port ${config.port}`);
-      console.log(`MongoDB: ${config.mongodb.uri}`);
-      console.log(`Redis: ${config.redis.host}:${config.redis.port}`);
+      console.log(`Database: SQLite (${config.database.storage})`);
       console.log('=================================================');
     });
 
@@ -137,11 +133,8 @@ const startServer = async () => {
       server.close(async () => {
         console.log('HTTP server closed');
         
-        await mongoose.connection.close();
-        console.log('MongoDB connection closed');
-        
-        await redisService.disconnect();
-        console.log('Redis connection closed');
+        await sequelize.close();
+        console.log('Database connection closed');
         
         process.exit(0);
       });

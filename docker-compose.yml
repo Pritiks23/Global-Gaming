@@ -9,48 +9,13 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MONGODB_URI=mongodb://mongodb:27017/gaming-leaderboard
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      - mongodb
-      - redis
-    networks:
-      - gaming-network
+      - DB_STORAGE=/app/data/leaderboard.sqlite
     volumes:
+      - ./data:/app/data
       - ./logs:/app/logs
-
-  # MongoDB service
-  mongodb:
-    image: mongo:6
-    container_name: gaming-leaderboard-mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=gaming-leaderboard
-    volumes:
-      - mongodb-data:/data/db
     networks:
       - gaming-network
-
-  # Redis service
-  redis:
-    image: redis:7-alpine
-    container_name: gaming-leaderboard-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - gaming-network
-    command: redis-server --appendonly yes
 
 networks:
   gaming-network:
     driver: bridge
-
-volumes:
-  mongodb-data:
-  redis-data:
