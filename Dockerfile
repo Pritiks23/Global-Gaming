@@ -7,7 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (includes SQLite binary)
-RUN npm ci --only=production
+# RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copy application code
 COPY . .
