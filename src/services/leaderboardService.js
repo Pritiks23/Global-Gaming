@@ -78,7 +78,7 @@ class LeaderboardService {
         rank: index + 1,
         userId: user.userId,
         totalScore: user.totalScore,
-        games: Object.fromEntries(user.games || new Map())
+        games: user.games || {}
       }));
       
       // Cache the result
@@ -137,7 +137,7 @@ class LeaderboardService {
         rank: userRank,
         userId: user.userId,
         totalScore: user.totalScore,
-        games: Object.fromEntries(user.games || new Map())
+        games: user.games || {}
       } : null;
       
       return {
@@ -146,7 +146,7 @@ class LeaderboardService {
           rank,
           userId: userScore.userId,
           totalScore: userScore.totalScore,
-          games: Object.fromEntries(userScore.games || new Map())
+          games: userScore.games || {}
         },
         userBelow: formatUser(userBelow, rank + 1)
       };
