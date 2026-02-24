@@ -15,7 +15,14 @@ const app = express();
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Allow Swagger UI to load
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "validator.swagger.io"]
+    }
+  }
 }));
 app.use(cors());
 
