@@ -11,6 +11,8 @@ jobs:
     name: Deploy to DigitalOcean App Platform
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -39,6 +41,8 @@ jobs:
     name: Deploy to DigitalOcean Droplet
     runs-on: ubuntu-latest
     if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && vars.DEPLOY_TO_DROPLET == 'true'
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
