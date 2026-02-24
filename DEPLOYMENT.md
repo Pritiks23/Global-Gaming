@@ -1,16 +1,16 @@
 # DigitalOcean Deployment Guide
 
-This guide provides step-by-step instructions for deploying the Global Gaming Leaderboard API to DigitalOcean.
+This guide provides step-by-step instructions for deploying the Global Gaming Leaderboard API to DigitalOcean in under 15 minutes!
 
 ## Prerequisites
 
 - DigitalOcean account
 - GitHub repository with your code
-- Basic understanding of Docker (for Droplet deployment)
+- That's it! No database setup needed!
 
 ## Deployment Options
 
-### Option 1: DigitalOcean App Platform (Easiest, Recommended for Quick Start)
+### Option 1: DigitalOcean App Platform (Easiest - 5-10 minutes)
 
 DigitalOcean App Platform is a Platform-as-a-Service (PaaS) that automatically builds and deploys your application.
 
@@ -21,7 +21,7 @@ DigitalOcean App Platform is a Platform-as-a-Service (PaaS) that automatically b
 3. Select **GitHub** as your source
 4. Authorize DigitalOcean to access your repository
 5. Select the `Pritiks23/Global-Gaming` repository
-6. Select the branch (e.g., `main` or `copilot/build-global-gaming-leaderboard-api`)
+6. Select the branch (e.g., `main`)
 
 #### Step 2: Configure Your App
 
@@ -32,38 +32,33 @@ DigitalOcean App Platform is a Platform-as-a-Service (PaaS) that automatically b
    - Build Command: `npm install`
    - Run Command: `npm start`
 4. **HTTP Port**: `3000`
-5. **Instance Size**: Basic ($5/month is sufficient for testing)
+5. **Instance Size**: Basic ($5/month is sufficient for most use cases)
 
-#### Step 3: Add Managed Databases
+#### Step 3: Add Persistent Storage (Optional but Recommended)
 
-1. In the app configuration, click **Add Resource** → **Database**
-2. Add **MongoDB** (Managed Database):
-   - Name: `gaming-leaderboard-db`
-   - Engine: MongoDB
-   - Size: Start with the smallest size ($15/month)
-3. Add **Redis** (if available) or use an external Redis provider like:
-   - Redis Labs (free tier available)
-   - Upstash (serverless Redis)
+To persist your database across deployments:
 
-#### Step 4: Configure Environment Variables
+1. Add a persistent volume:
+   - Mount Path: `/app/data`
+   - This will ensure your SQLite database persists across deployments
 
-In the App Platform dashboard, go to **Settings** → **Environment Variables** and add:
+#### Step 4: Configure Environment Variables (Optional)
+
+In the App Platform dashboard, go to **Settings** → **Environment Variables**:
 
 ```
 NODE_ENV=production
 PORT=3000
-MONGODB_URI=${db.CONNECTION_STRING}
-REDIS_HOST=<your-redis-host>
-REDIS_PORT=6379
-CACHE_TTL=300
+DB_STORAGE=/app/data/leaderboard.sqlite
+MAX_LEADERBOARD_SIZE=10000
 ```
 
-Note: `${db.CONNECTION_STRING}` automatically references your managed database.
+These are optional - the app works with sensible defaults!
 
 #### Step 5: Deploy
 
 1. Click **Deploy**
-2. Wait for the build and deployment to complete (5-10 minutes)
+2. Wait for the build and deployment to complete (3-5 minutes)
 3. Your API will be available at: `https://your-app-name.ondigitalocean.app`
 
 #### Step 6: Test Your Deployment
@@ -78,9 +73,11 @@ curl -X POST https://your-app-name.ondigitalocean.app/scores \
   -d '{"userId":"player1","gameName":"tetris","score":5000}'
 ```
 
+**Total Time: 5-10 minutes!**
+
 ---
 
-### Option 2: DigitalOcean Droplet with Docker (More Control)
+### Option 2: DigitalOcean Droplet with Docker (10-15 minutes)
 
 This option gives you full control over your infrastructure using a VPS (Droplet).
 
@@ -90,7 +87,7 @@ This option gives you full control over your infrastructure using a VPS (Droplet
 2. Click **Create** → **Droplets**
 3. Choose:
    - **Image**: Ubuntu 22.04 LTS
-   - **Plan**: Basic - $6/month (1GB RAM)
+   - **Plan**: Basic - $6/month (1GB RAM is sufficient)
    - **Datacenter**: Closest to your users
    - **Authentication**: SSH keys (recommended) or password
    - **Hostname**: `gaming-leaderboard-api`
@@ -136,28 +133,35 @@ ufw status
 git clone https://github.com/Pritiks23/Global-Gaming.git
 cd Global-Gaming
 
-# Create .env file
-cat > .env << EOF
-NODE_ENV=production
-PORT=3000
-MONGODB_URI=mongodb://mongodb:27017/gaming-leaderboard
-REDIS_HOST=redis
-REDIS_PORT=6379
-CACHE_TTL=300
-MAX_LEADERBOARD_SIZE=10000
-EOF
-
-# Start services with Docker Compose
+# Start the service with Docker Compose
 docker compose up -d
 
-# Check if containers are running
+# Check if container is running
 docker compose ps
 
 # View logs
 docker compose logs -f app
 ```
 
-#### Step 5: Setup Nginx as Reverse Proxy (Optional but Recommended)
+**That's it! Your API is now live at `http://YOUR_DROPLET_IP:3000`**
+
+#### Step 5: Test Your Deployment
+
+```bash
+# Test from your local machine
+curl http://YOUR_DROPLET_IP:3000/health
+
+# Submit a score
+curl -X POST http://YOUR_DROPLET_IP:3000/scores \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"player1","gameName":"tetris","score":5000}'
+```
+
+**Total Time: 10-15 minutes!**
+
+#### Optional: Setup Nginx as Reverse Proxy
+
+If you want to use port 80 instead of 3000:
 
 ```bash
 # Install Nginx
@@ -191,7 +195,7 @@ nginx -t
 systemctl reload nginx
 ```
 
-#### Step 6: Setup SSL with Let's Encrypt (For Custom Domain)
+#### Optional: Setup SSL with Let's Encrypt (For Custom Domain)
 
 ```bash
 # Install Certbot
@@ -201,43 +205,6 @@ apt install certbot python3-certbot-nginx -y
 certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 # Certbot will automatically configure SSL and set up auto-renewal
-```
-
-#### Step 7: Setup Auto-restart on System Reboot
-
-```bash
-# Docker containers will auto-restart due to "restart: unless-stopped" in docker-compose.yml
-
-# Verify
-docker compose ps
-
-# To manually restart all services
-docker compose restart
-```
-
----
-
-### Option 3: DigitalOcean Kubernetes (For Production Scale)
-
-For high-scale production deployments, consider using DigitalOcean Kubernetes (DOKS).
-
-#### Quick Setup
-
-1. Create a Kubernetes cluster in DigitalOcean
-2. Install `kubectl` and `doctl` CLI tools
-3. Build and push your Docker image to DigitalOcean Container Registry
-4. Deploy using Kubernetes manifests
-
-```bash
-# Build and tag image
-docker build -t registry.digitalocean.com/your-registry/gaming-leaderboard:latest .
-
-# Push to DO Container Registry
-docker push registry.digitalocean.com/your-registry/gaming-leaderboard:latest
-
-# Deploy to Kubernetes
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
 ```
 
 ---
@@ -265,11 +232,8 @@ curl http://YOUR_IP_OR_DOMAIN/health
 # Docker Compose
 docker compose logs -f app
 
-# View MongoDB logs
-docker compose logs -f mongodb
-
-# View Redis logs
-docker compose logs -f redis
+# View last 100 lines
+docker compose logs --tail=100 app
 ```
 
 ### Update Application
@@ -279,7 +243,7 @@ docker compose logs -f redis
 cd /root/Global-Gaming
 git pull origin main
 
-# Rebuild and restart containers
+# Rebuild and restart container
 docker compose down
 docker compose up -d --build
 
@@ -287,19 +251,15 @@ docker compose up -d --build
 docker compose ps
 ```
 
-### Backup Data
+### Backup Database
 
 ```bash
-# Backup MongoDB
-docker compose exec mongodb mongodump --out=/data/backup
+# The SQLite database is in the data directory
+# Create a backup
+cp data/leaderboard.sqlite data/leaderboard-backup-$(date +%Y%m%d).sqlite
 
-# Copy backup to host
-docker cp gaming-leaderboard-mongodb:/data/backup ./mongodb-backup-$(date +%Y%m%d)
-
-# Backup to DigitalOcean Spaces (optional)
-# Install s3cmd first
-apt install s3cmd -y
-s3cmd put -r ./mongodb-backup-* s3://your-bucket/backups/
+# Or copy to your local machine
+scp root@YOUR_DROPLET_IP:/root/Global-Gaming/data/leaderboard.sqlite ./backup.sqlite
 ```
 
 ### Monitor Resources
@@ -325,11 +285,24 @@ free -h
 # Check logs
 docker compose logs app
 
-# Check MongoDB connection
-docker compose exec app node -e "const mongoose = require('mongoose'); mongoose.connect(process.env.MONGODB_URI).then(() => console.log('Connected')).catch(e => console.error(e))"
-
-# Check if ports are available
+# Check if port is available
 netstat -tulpn | grep 3000
+
+# Restart container
+docker compose restart app
+```
+
+### Database Issues
+
+```bash
+# Check if database file exists
+ls -lh data/
+
+# Check database file permissions
+chmod 644 data/leaderboard.sqlite
+
+# Restart the application
+docker compose restart app
 ```
 
 ### High Memory Usage
@@ -341,52 +314,58 @@ docker compose restart
 # Monitor resource usage
 docker stats
 
-# Consider upgrading droplet size
-```
-
-### Database Connection Issues
-
-```bash
-# Check MongoDB is running
-docker compose ps mongodb
-
-# Check MongoDB logs
-docker compose logs mongodb
-
-# Test connection
-docker compose exec mongodb mongosh
+# Consider upgrading droplet size if needed
 ```
 
 ---
 
 ## Cost Estimation
 
-### App Platform (Recommended for Beginners)
+### App Platform (Easiest)
 - Basic App: $5/month
-- Managed MongoDB: $15/month
-- Total: ~$20/month
+- **Total: $5/month** (No separate database costs!)
 
-### Droplet + Docker (More Control)
+### Droplet + Docker (Most Cost-Effective)
 - Basic Droplet (1GB): $6/month
-- MongoDB runs on same droplet: $0
-- Redis runs on same droplet: $0
-- Total: ~$6/month
+- Database runs in same container: $0
+- **Total: $6/month**
 
-### Production Setup
-- App Platform Pro: $12/month
-- Managed MongoDB (2GB): $30/month
-- Managed Redis: $15/month
-- Total: ~$57/month
+### Production Setup with Larger Droplet
+- Standard Droplet (2GB): $12/month
+- **Total: $12/month**
+
+**Savings**: No longer need MongoDB ($15/month) or Redis ($15/month) = **Save $30/month!**
+
+---
+
+## Quick Deployment Checklist
+
+### For App Platform (5-10 minutes):
+- [ ] Create App in DigitalOcean
+- [ ] Connect GitHub repository
+- [ ] Configure build settings (npm install, npm start)
+- [ ] (Optional) Add persistent volume for /app/data
+- [ ] Deploy
+- [ ] Test endpoints
+
+### For Droplet (10-15 minutes):
+- [ ] Create Droplet (Ubuntu 22.04, 1GB RAM)
+- [ ] SSH into droplet
+- [ ] Install Docker & Docker Compose
+- [ ] Setup firewall (UFW)
+- [ ] Clone repository
+- [ ] Run `docker compose up -d`
+- [ ] Test endpoints
 
 ---
 
 ## Next Steps
 
-1. Set up monitoring (DigitalOcean Monitoring, or tools like Datadog, New Relic)
-2. Configure backups (DigitalOcean Snapshots or automated backup scripts)
-3. Set up CI/CD pipeline (GitHub Actions)
-4. Add custom domain and SSL
-5. Scale horizontally by adding more app instances
+1. **Monitor Usage**: Keep an eye on resource usage in the first few days
+2. **Setup Backups**: Schedule regular backups of the SQLite database file
+3. **Custom Domain**: Point a domain to your deployment (optional)
+4. **SSL Certificate**: Add HTTPS with Let's Encrypt (optional, but recommended)
+5. **CI/CD**: Set up GitHub Actions for automated deployments (optional)
 
 ---
 
@@ -399,10 +378,13 @@ For deployment issues:
 
 ---
 
-**Important Security Notes:**
-- Always use environment variables for sensitive data
-- Enable firewall (UFW)
-- Keep system and packages updated
-- Use SSH keys instead of passwords
-- Regularly backup your data
-- Monitor logs for suspicious activity
+**Important Notes:**
+- The SQLite database is file-based and stored in the `data/` directory
+- For App Platform, use persistent volumes to keep data across deployments
+- For Droplet deployments, the data persists automatically in the mounted volume
+- Regular backups are recommended (just copy the SQLite file)
+- No external database services needed = Lower costs and simpler deployment!
+
+---
+
+**🚀 Deploy in under 15 minutes! No database setup required!**

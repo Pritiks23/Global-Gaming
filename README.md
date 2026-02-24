@@ -294,12 +294,13 @@ npm run dev
 Global-Gaming/
 ├── src/
 │   ├── config/          # Configuration files
-│   ├── models/          # MongoDB models
+│   ├── models/          # Database models (Sequelize)
 │   ├── services/        # Business logic
 │   ├── controllers/     # Request handlers
 │   ├── routes/          # API routes
 │   ├── middleware/      # Custom middleware
 │   └── server.js        # Application entry point
+├── data/                # SQLite database files (auto-created)
 ├── docker-compose.yml   # Docker Compose configuration
 ├── Dockerfile           # Docker image definition
 ├── package.json         # Dependencies
@@ -309,6 +310,7 @@ Global-Gaming/
 ## Future Enhancements
 
 - Automated testing (Jest/Mocha for unit tests, Supertest for API tests)
+- Migrate to PostgreSQL/MySQL for very high-scale deployments
 - WebSocket support for real-time updates
 - Multi-region deployment
 - Advanced analytics and insights
@@ -317,6 +319,18 @@ Global-Gaming/
 - Time-based leaderboards (daily, weekly, monthly)
 - GraphQL API
 - Admin dashboard
+
+## Why SQLite?
+
+SQLite is perfect for this use case because:
+- **Zero Configuration**: No separate database server to manage
+- **Fast**: Excellent performance for read-heavy workloads
+- **Reliable**: ACID-compliant, battle-tested database
+- **Portable**: Single file that's easy to backup and migrate
+- **Cost-Effective**: No database hosting costs
+- **Easy to Scale Up**: Can migrate to PostgreSQL/MySQL later if needed
+
+For most gaming leaderboards with <100K active users, SQLite provides excellent performance!
 
 ## License
 
