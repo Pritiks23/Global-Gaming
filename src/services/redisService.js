@@ -80,10 +80,24 @@ class RedisService {
     if (!this.isConnected || !this.client) return false;
     
     try {
-      // Delete all leaderboard cache keys
-      const keys = await this.client.keys('leaderboard:*');
-      if (keys.length > 0) {
-        await this.client.del(keys);
+      // Use SCAN instead of KEYS for non-blocking iteration
+      const keysToDelete = [];
+      let cursor = 0;
+      
+      do {
+        const result = await this.client.scan(cursor, {
+          MATCH: 'leaderboard:*',
+          COUNT: 100
+        });
+        
+        cursor = result.cursor;
+        if (result.keys.length > 0) {
+          keysToDelete.push(...result.keys);
+        }
+      } while (cursor !== 0);
+      
+      if (keysToDelete.length > 0) {
+        await this.client.del(keysToDelete);
       }
       return true;
     } catch (error) {

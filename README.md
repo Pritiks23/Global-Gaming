@@ -321,6 +321,7 @@ Global-Gaming/
 
 ## Future Enhancements
 
+- Automated testing (Jest/Mocha for unit tests, Supertest for API tests)
 - WebSocket support for real-time updates
 - Multi-region deployment
 - Advanced analytics and insights
