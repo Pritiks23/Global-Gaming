@@ -1,0 +1,59 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy-app-platform:
+    name: Deploy to DigitalOcean App Platform
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Trigger App Platform Deployment
+        if: vars.DIGITALOCEAN_APP_ID != ''
+        run: |
+          echo "Triggering deployment for App ID: ${{ vars.DIGITALOCEAN_APP_ID }}"
+          doctl apps create-deployment ${{ vars.DIGITALOCEAN_APP_ID }} --wait
+          echo "Deployment completed successfully!"
+
+      - name: Get App URL
+        if: vars.DIGITALOCEAN_APP_ID != ''
+        run: |
+          APP_URL=$(doctl apps get ${{ vars.DIGITALOCEAN_APP_ID }} --format DefaultIngress --no-header)
+          echo "Application deployed at: https://$APP_URL"
+          echo "Swagger UI available at: https://$APP_URL/api-docs"
+
+  deploy-droplet:
+    name: Deploy to DigitalOcean Droplet
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && vars.DEPLOY_TO_DROPLET == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Droplet via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USERNAME }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            cd /root/Global-Gaming
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            echo "Deployment completed!"
+            docker compose ps

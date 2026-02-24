@@ -2,6 +2,12 @@
 
 This guide provides step-by-step instructions for deploying the Global Gaming Leaderboard API to DigitalOcean in under 15 minutes!
 
+## Important: Automated Deployment Available!
+
+**🚀 Want automatic deployments when you push code?** Check out [AUTOMATED_DEPLOYMENT.md](./AUTOMATED_DEPLOYMENT.md) to set up GitHub Actions so that your Swagger UI and other code changes automatically deploy to DigitalOcean.
+
+Without automated deployment, you'll need to manually redeploy after each code change (see "Update Application" sections below).
+
 ## Prerequisites
 
 - DigitalOcean account
@@ -74,6 +80,20 @@ curl -X POST https://your-app-name.ondigitalocean.app/scores \
 ```
 
 **Total Time: 5-10 minutes!**
+
+#### Step 7: Update Your Deployment (When Code Changes)
+
+When you make changes to your code (like Swagger UI updates), you need to trigger a redeployment:
+
+**Manual Redeploy via DigitalOcean Console:**
+1. Go to https://cloud.digitalocean.com/apps
+2. Click on your app
+3. Click **Actions** → **Force Rebuild and Deploy**
+4. Wait 3-5 minutes for deployment to complete
+
+**Automatic Redeploy (Recommended):**
+- Set up GitHub Actions for automatic deployment: See [AUTOMATED_DEPLOYMENT.md](./AUTOMATED_DEPLOYMENT.md)
+- Once configured, every push to `main` automatically deploys!
 
 ---
 

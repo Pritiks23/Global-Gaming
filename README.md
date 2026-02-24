@@ -4,6 +4,7 @@ A simple, production-ready REST API for managing global gaming leaderboards with
 
 ## Features
 
+- **Interactive API Documentation**: Swagger UI at `/api-docs` for easy API exploration
 - **Real-time Score Updates**: Submit and update scores for users across multiple games
 - **Efficient Leaderboard Queries**: Get top rankings with optimized database indexing
 - **User Context**: View user rank with surrounding players
@@ -12,6 +13,30 @@ A simple, production-ready REST API for managing global gaming leaderboards with
 - **Persistent Storage**: SQLite for reliable data persistence
 - **Security**: Rate limiting, helmet.js, input validation
 - **Production Ready**: Docker containerization, health checks, graceful shutdown
+- **Automated Deployment**: GitHub Actions for continuous deployment to DigitalOcean
+
+## Quick Links
+
+- 📚 **[API Documentation (Swagger UI)](#swagger-ui)**: Interactive API documentation
+- 🚀 **[Quick Start Guide](./QUICKSTART.md)**: Get up and running in 5 minutes
+- 📦 **[Deployment Guide](./DEPLOYMENT.md)**: Deploy to DigitalOcean
+- 🔄 **[Automated Deployment](./AUTOMATED_DEPLOYMENT.md)**: Set up automatic deployments
+- 📊 **[Database Simplification](./DATABASE_SIMPLIFICATION.md)**: Architecture decisions
+
+## Swagger UI
+
+This API includes interactive Swagger documentation at the `/api-docs` endpoint:
+
+- **Local Development**: http://localhost:3000/api-docs
+- **Production**: https://your-app-name.ondigitalocean.app/api-docs
+
+The Swagger UI allows you to:
+- Explore all API endpoints
+- View request/response schemas
+- Test API calls directly from your browser
+- Download OpenAPI specification
+
+![Swagger UI Preview](https://img.shields.io/badge/API-Documented-blue?style=flat-square&logo=swagger)
 
 ## API Endpoints
 
