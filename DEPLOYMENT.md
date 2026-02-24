@@ -334,7 +334,7 @@ docker stats
 - Standard Droplet (2GB): $12/month
 - **Total: $12/month**
 
-**Savings**: No longer need MongoDB ($15/month) or Redis ($15/month) = **Save $30/month!**
+**Cost Comparison**: Using SQLite instead of managed databases (MongoDB $15/month + Redis $15/month) can save $30/month or more, making it ideal for budget-conscious deployments and quick prototypes.
 
 ---
 

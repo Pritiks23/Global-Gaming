@@ -1,6 +1,6 @@
 # Global Gaming Leaderboard API
 
-A simple, production-ready REST API for managing global gaming leaderboards with real-time rankings, built with Node.js, Express, and SQLite.
+A simple, production-ready REST API for managing global gaming leaderboards with real-time score updates, built with Node.js, Express, and SQLite.
 
 ## Features
 
@@ -324,13 +324,13 @@ Global-Gaming/
 
 SQLite is perfect for this use case because:
 - **Zero Configuration**: No separate database server to manage
-- **Fast**: Excellent performance for read-heavy workloads
+- **Fast**: Excellent performance for moderate traffic (thousands of requests per hour)
 - **Reliable**: ACID-compliant, battle-tested database
 - **Portable**: Single file that's easy to backup and migrate
 - **Cost-Effective**: No database hosting costs
 - **Easy to Scale Up**: Can migrate to PostgreSQL/MySQL later if needed
 
-For most gaming leaderboards with <100K active users, SQLite provides excellent performance!
+**Performance Guidance**: SQLite works great for most gaming leaderboards with moderate write frequency (under 1000 writes/second). For very high-traffic applications or multi-region deployments, consider PostgreSQL or MySQL with read replicas.
 
 ## License
 

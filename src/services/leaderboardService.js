@@ -17,8 +17,8 @@ class LeaderboardService {
           totalScore: score
         });
       } else {
-        // Update the game score
-        const games = userScore.games || {};
+        // Update the game score - create a new object for Sequelize change tracking
+        const games = { ...(userScore.games || {}) };
         games[gameName] = score;
         
         // Recalculate total score
