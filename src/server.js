@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 
 const config = require('./config');
 const routes = require('./routes');
@@ -12,7 +14,16 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "validator.swagger.io"]
+    }
+  }
+}));
 app.use(cors());
 
 // Logging middleware
@@ -30,7 +41,37 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Health check endpoint
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Global Gaming API Docs'
+}));
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: System health status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 uptime:
+ *                   type: number
+ *                 environment:
+ *                   type: string
+ */
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -46,6 +87,7 @@ app.get('/', (req, res) => {
     name: 'Global Gaming Leaderboard API',
     version: '1.0.0',
     description: 'Scalable REST API for managing global gaming leaderboards with real-time rankings',
+    documentation: '/api-docs',
     endpoints: {
       'POST /scores': {
         description: 'Submit or update a score for a user in a specific game',
