@@ -1,7 +1,7 @@
 # Global Gaming Leaderboard API
 
 A simple, production-ready REST API for managing global gaming leaderboards with real-time score updates, built with Node.js, Express, and SQLite.
-
+Screen Shot 2026-02-21 at 5.52.10 PM.png
 ## Features
 
 - **Real-time Score Updates**: Submit and update scores for users across multiple games
